@@ -12,16 +12,33 @@ struct Point
     int x{ 0 }, y{ 0 };
     Point(int xIn, int yIn) : x{ xIn }, y{ yIn } {}
 };
-void drawLine(const Point&  pointOne,  const Point& pointTwo, TGAImage& frameBuffer, const TGAColor& colorOfLine)
+void drawLine(Point  pointOne, Point pointTwo, TGAImage& frameBuffer, const TGAColor& colorOfLine)
 {
-    float t{ 0.f };
-    while (t < 1.f)
+    bool steep = std::abs(pointOne.x - pointTwo.x) < std::abs(pointOne.y - pointTwo.y);
+    if (steep)
     {
-        int currentX = std::round(pointOne.x + t * (pointTwo.x - pointOne.x));
-        int currentY = std::round(pointOne.y + t * (pointTwo.y - pointOne.y));
+        // Transpose x & y so that steep lines still get filled in
+        std::swap(pointOne.x, pointOne.y);
+        std::swap(pointTwo.x, pointTwo.y);
+    }
+    if (pointOne.x > pointTwo.x) // Distance is negative
+    {
+        std::swap(pointOne, pointTwo); // Swap Points to get have negative dist filled in
+    }
+    for (int x = pointOne.x; x <= pointTwo.x; x++)
+    {
+        float t = (x - pointOne.x) / static_cast<float>(pointTwo.x - pointOne.x);
+        int y = std::round(pointOne.y + (pointTwo.y - pointOne.y)*t);
 
-        frameBuffer.set(currentX, currentY, colorOfLine);
-        t += .01;
+        if (!steep)
+        {
+            frameBuffer.set(x, y, colorOfLine);
+        }
+        else
+        {
+            frameBuffer.set(y, x, colorOfLine);
+        }
+
     }
 }
 int main(int argc, char** argv) {
@@ -47,6 +64,6 @@ int main(int argc, char** argv) {
     framebuffer.set(bx, by, white);
     framebuffer.set(cx, cy, white);
 
-    framebuffer.write_tga_file("lineTest_01Percent.tga");
+    framebuffer.write_tga_file("lineTest_FixedDynamicTri_T1.tga");
     return 0;
 }
